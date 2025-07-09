@@ -1,10 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView
-from .models import Meal
+from .models import Meal, Order, OrderItem
 from django.shortcuts import render
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required
 from .models import Meal
 from .forms import MealForm
 
@@ -82,4 +83,92 @@ class MealDeleteView(LoginRequiredMixin, VendorRequiredMixin, DeleteView):
         # Ensure vendors can only delete their own meals
         return Meal.objects.filter(vendor=self.request.user)
     
+
+def add_to_cart(request, meal_id):
+    # meal = get_object_or_404(Meal, id=meal_id)
+    # Get the cart from the session, or create an empty one
+    cart = request.session.get('cart', {})
+    
+    # Add the meal to the cart or increment its quantity
+    meal_id_str = str(meal_id)
+    quantity = cart.get(meal_id_str, 0) + 1
+    cart[meal_id_str] = quantity
+    
+    # Save the updated cart back to the session
+    request.session['cart'] = cart
+    
+    return redirect('homepage')
+
+@login_required
+def view_cart(request):
+    cart = request.session.get('cart', {})
+    cart_items = []
+    total_price = 0
+    
+    for meal_id, quantity in cart.items():
+        meal = get_object_or_404(Meal, id=int(meal_id))
+        item_total = meal.price * quantity
+        cart_items.append({'meal': meal, 'quantity': quantity, 'total': item_total})
+        total_price += item_total
+        
+    return render(request, 'orders/cart_detail.html', {
+        'cart_items': cart_items, 
+        'total_price': total_price
+    })
+
+@login_required
+def checkout(request):
+    cart = request.session.get('cart', {})
+    if not cart:
+        return redirect('homepage')
+
+    # Create the main order
+    order = Order.objects.create(customer=request.user)
+    
+    # Create order items from the cart
+    for meal_id, quantity in cart.items():
+        meal = get_object_or_404(Meal, id=int(meal_id))
+        OrderItem.objects.create(order=order, meal=meal, quantity=quantity)
+    
+    # Clear the cart from the session
+    request.session['cart'] = {}
+    
+    return redirect('order_confirmation') # Redirect to your existing success page
+    
+
+@login_required
+def view_cart(request):
+    cart = request.session.get('cart', {})
+    cart_items = []
+    total_price = 0
+    
+    for meal_id, quantity in cart.items():
+        meal = get_object_or_404(Meal, id=int(meal_id))
+        item_total = meal.price * quantity
+        cart_items.append({'meal': meal, 'quantity': quantity, 'total': item_total})
+        total_price += item_total
+        
+    return render(request, 'orders/cart_details.html', {
+        'cart_items': cart_items, 
+        'total_price': total_price
+    })
+
+@login_required
+def checkout(request):
+    cart = request.session.get('cart', {})
+    if not cart:
+        return redirect('homepage')
+
+    # Create the main order for the logged-in user
+    order = Order.objects.create(customer=request.user)
+    
+    # Create an OrderItem for each item in the cart
+    for meal_id, quantity in cart.items():
+        meal = get_object_or_404(Meal, id=int(meal_id))
+        OrderItem.objects.create(order=order, meal=meal, quantity=quantity)
+    
+    # Clear the cart from the session
+    request.session['cart'] = {}
+    
+    return redirect('order_confirmation')
 
