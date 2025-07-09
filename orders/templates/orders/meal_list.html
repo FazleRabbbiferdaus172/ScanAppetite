@@ -22,7 +22,7 @@
                         <h6 class="card-subtitle mb-2 text-muted">Vendor: {{ meal.vendor.first_name }}</h6>
                         <p class="card-text">{{ meal.description }}</p>
                         <p class="card-text"><strong>${{ meal.price }}</strong></p>
-                        <a href="#" class="btn btn-primary">Order Now</a>
+                        <a href="{% url 'add_to_cart' meal.id %}" class="btn btn-primary">Add to Cart</a>
                     </div>
                 </div>
             </div>
