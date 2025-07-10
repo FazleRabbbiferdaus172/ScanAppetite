@@ -2,35 +2,81 @@
 
 {% block content %}
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center">
-        <h1>Your Meal Listings</h1>
-        <a href="{% url 'meal_add' %}" class="btn btn-primary">Add New Meal</a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Vendor Dashboard</h1>
+        <a href="{% url 'vendor_order_history' %}" class="btn btn-outline-secondary">View Order History</a>
     </div>
-    <hr>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Price</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for meal in meals %}
-            <tr>
-                <td>{{ meal.name }}</td>
-                <td>${{ meal.price }}</td>
-                <td>
-                    <a href="{% url 'meal_edit' meal.pk %}" class="btn btn-sm btn-warning">Edit</a>
-                    <a href="{% url 'meal_delete' meal.pk %}" class="btn btn-sm btn-danger">Delete</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="3">You have not added any meals yet.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+    <div class="card mb-5">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Your Meal Listings</h4>
+            <a href="{% url 'meal_add' %}" class="btn btn-primary">Add New Meal</a>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <tbody>
+                    {% for meal in meals %}
+                    <tr>
+                        <td>{{ meal.name }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'meal_edit' meal.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                            <a href="{% url 'meal_delete' meal.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td>You have not added any meals yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4>Active Order Items</h4>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Meal</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order_items %}
+                    <tr>
+                        <td>{{ item.order.id }}</td>
+                        <td>{{ item.meal.name }} (Qty: {{ item.quantity }})</td>
+                        <td><span class="badge bg-info">{{ item.get_status_display }}</span></td>
+                        <td>
+                            <form action="{% url 'update_order_item_status' item.id %}" method="post">
+                                {% csrf_token %}
+                                {% if item.status == 'CONFIRMED' %}
+                                    <input type="hidden" name="new_status" value="PROCESSING">
+                                    <button type="submit" class="btn btn-sm btn-primary">Start Processing</button>
+                                {% elif item.status == 'PROCESSING' %}
+                                    <input type="hidden" name="new_status" value="READY_FOR_PICKUP">
+                                    <button type="submit" class="btn btn-sm btn-warning">Ready for Pickup</button>
+                                {% elif item.status == 'READY_FOR_PICKUP' %}
+                                    <input type="hidden" name="new_status" value="DELIVERED">
+                                    <button type="submit" class="btn btn-sm btn-success">Mark as Delivered</button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">You have no active order items.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}

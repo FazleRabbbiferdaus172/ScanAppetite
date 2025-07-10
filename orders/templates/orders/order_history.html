@@ -1,0 +1,40 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Your Order History</h2>
+    <hr>
+    {% for order in orders %}
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between">
+                <span><strong>Order #{{ order.id }}</strong> - Placed on: {{ order.created_at|date:"F d, Y" }}</span>
+                <span>Overall Status: <span class="badge bg-secondary">{{ order.get_status_display }}</span></span>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for item in order.items.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ item.meal.name }}</strong> (Qty: {{ item.quantity }})
+                                <small class="d-block text-muted">Vendor: {{ item.meal.vendor.username }}</small>
+                            </div>
+                            <span class="badge bg-info rounded-pill">{{ item.get_status_display }}</span>
+                        {% if item.status == 'READY_FOR_PICKUP' %}
+                            <div class="mt-2 text-center">
+                                <img src="{% url 'view_item_barcode' item.id %}" alt="Pickup Barcode" style="max-width: 200px;">
+                                <form action="{% url 'confirm_pickup' item.id %}" method="post" class="mt-2">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success">Confirm Pickup (Scan)</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% empty %}
+        <p>You have not placed any orders yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}
