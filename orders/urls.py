@@ -15,7 +15,8 @@ from .views import (
     order_history_view,
     view_item_barcode,
     confirm_pickup_view,
-    VendorOrderHistoryView
+    VendorOrderHistoryView,
+    printable_barcode_view
 )
 
 urlpatterns = [
@@ -37,4 +38,5 @@ urlpatterns = [
     path('dashboard/meal/<int:pk>/delete/', MealDeleteView.as_view(), name='meal_delete'),
     path('order-item/<int:item_id>/update-status/', update_order_item_status_view, name='update_order_item_status'),
     path('dashboard/history/', VendorOrderHistoryView.as_view(), name='vendor_order_history'),
+    path('order-item/<int:item_id>/print/', printable_barcode_view, name='printable_barcode')
 ]

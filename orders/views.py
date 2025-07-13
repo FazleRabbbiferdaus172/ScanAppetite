@@ -264,3 +264,9 @@ class VendorOrderHistoryView(LoginRequiredMixin, VendorRequiredMixin, ListView):
             ]
         ).order_by('-order__created_at')
 
+@login_required
+def printable_barcode_view(request, item_id):
+    # Security: Ensure user is a vendor and this item belongs to them
+    item = get_object_or_404(OrderItem, id=item_id, meal__vendor=request.user)
+    return render(request, 'orders/printable_barcode.html', {'item': item})
+

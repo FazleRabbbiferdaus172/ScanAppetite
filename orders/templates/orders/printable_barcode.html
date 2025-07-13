@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Print Barcode for Order #{{ item.order.id }}</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; }
+        img { max-width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+    <h3>Order #{{ item.order.id }} - {{ item.meal.name }}</h3>
+    <p>Customer: {{ item.order.customer.username }}</p>
+    <img src="{% url 'view_item_barcode' item.id %}" alt="Pickup Barcode">
+</body>
+</html>
