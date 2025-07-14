@@ -3,6 +3,13 @@ from django.db import models
 import uuid
 
 class Meal(models.Model):
+    class TimeSlots(models.TextChoices):
+        LUNCH_1200 = '12:00', '12:00 PM'
+        LUNCH_1230 = '12:30', '12:30 PM'
+        LUNCH_1300 = '13:00', '13:00 PM'
+        DINNER_1800 = '18:00', '6:00 PM'
+        DINNER_1830 = '18:30', '6:30 PM'
+
     vendor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.TextField()
@@ -48,6 +55,8 @@ class OrderItem(models.Model):
     status = models.CharField(max_length=20, choices=FulfillmentStatus.choices, default=FulfillmentStatus.CONFIRMED)
     preferred_delivery_time = models.DateTimeField(null=True, blank=True)
     barcode_id = models.UUIDField(default=uuid.uuid4, editable=False)
+    pickup_date = models.DateField()
+    pickup_time = models.CharField(max_length=10, choices=Meal.TimeSlots.choices)
 
     def __str__(self):
         return f"{self.quantity} of {self.meal.name}"
