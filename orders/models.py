@@ -1,3 +1,4 @@
+from datetime import date
 from django.conf import settings
 from django.db import models
 import uuid
@@ -55,8 +56,8 @@ class OrderItem(models.Model):
     status = models.CharField(max_length=20, choices=FulfillmentStatus.choices, default=FulfillmentStatus.CONFIRMED)
     preferred_delivery_time = models.DateTimeField(null=True, blank=True)
     barcode_id = models.UUIDField(default=uuid.uuid4, editable=False)
-    pickup_date = models.DateField()
-    pickup_time = models.CharField(max_length=10, choices=Meal.TimeSlots.choices)
+    pickup_date = models.DateField(default=date.today)
+    pickup_time = models.CharField(default = Meal.TimeSlots.LUNCH_1200, max_length=10, choices=Meal.TimeSlots.choices)
 
     def __str__(self):
         return f"{self.quantity} of {self.meal.name}"

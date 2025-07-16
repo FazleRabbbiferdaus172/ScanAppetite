@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, TemplateView
 from django.shortcuts import render
@@ -127,29 +128,56 @@ def view_cart(request):
 
     return render(request, 'orders/cart_detail.html', {
         'cart_items': cart_items,
-        'total_price': total_price
+        'total_price': total_price,
+        'meal_model': Meal
     })
 
 
 @login_required
 def checkout(request):
-    cart = request.session.get('cart', {})
-    if not cart:
-        return redirect('homepage')
+    if request.method == 'POST':
+        cart = request.session.get('cart', {})
+        if not cart:
+            return redirect('homepage')
 
-    order = Order.objects.create(customer=request.user, status=Order.OrderStatus.DRAFT)
+        order = Order.objects.create(customer=request.user, status=Order.OrderStatus.DRAFT)
+        total_price = 0
 
-    total_price = 0
-    for meal_id, quantity in cart.items():
-        meal = get_object_or_404(Meal, id=int(meal_id))
-        OrderItem.objects.create(order=order, meal=meal, quantity=quantity)
-        total_price += meal.price * quantity
+        # Loop through the items that should be in the cart
+        for meal_id, quantity in cart.items():
+            meal = get_object_or_404(Meal, id=int(meal_id))
 
-    invoice = Invoice.objects.create(order=order, total_amount=total_price)
+            # Get the date and time for this specific meal from the submitted form data
+            pickup_date_str = request.POST.get(f'pickup_date_{meal_id}')
+            pickup_time = request.POST.get(f'pickup_time_{meal_id}')
 
-    request.session['cart'] = {}
+            # --- Validation ---
+            if not pickup_date_str or not pickup_time:
+                messages.error(request, f"Please provide a pickup date and time for {meal.name}.")
+                return redirect('view_cart')  # Go back to the cart page
 
-    return redirect('invoice_detail', order_id=order.id)
+            pickup_date = date.fromisoformat(pickup_date_str)
+            if pickup_date < date.today() + timedelta(days=1):
+                messages.error(request, "Orders must be for the next day or later.")
+                return redirect('view_cart')
+            # --- End Validation ---
+
+            OrderItem.objects.create(
+                order=order,
+                meal=meal,
+                quantity=quantity,
+                pickup_date=pickup_date_str,
+                pickup_time=pickup_time
+            )
+            total_price += meal.price * quantity
+
+        Invoice.objects.create(order=order, total_amount=total_price)
+        request.session['cart'] = {}
+
+        return redirect('invoice_detail', order_id=order.id)
+
+    # If a user tries to access the checkout URL with GET, send them to their cart
+    return redirect('view_cart')
 
 
 @login_required
