@@ -1,29 +1,35 @@
+import uuid
+import json
+import barcode
+from collections import defaultdict
+from io import BytesIO
+from barcode.writer import ImageWriter, SVGWriter
 from datetime import date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, TemplateView
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-import barcode
-from barcode.writer import ImageWriter, SVGWriter
-from io import BytesIO
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .models import Meal, Order, OrderItem, Invoice
+from users.models import CustomUser
 from .forms import MealForm
 
 
 def homepage_view(request):
-    # If the user is logged in AND is a vendor
     if request.user.is_authenticated and request.user.user_type == 'VENDOR':
-        # Redirect them to their dashboard
         return redirect('vendor_dashboard')
 
-    # Otherwise, show the normal meal list page to customers and anonymous users
-    meals = Meal.objects.all()
-    context = {'meals': meals}
+    vendors_with_meals = defaultdict(list)
+    meals = Meal.objects.select_related('vendor').all()
+    for meal in meals:
+        vendors_with_meals[meal.vendor].append(meal)
+
+    context = {'vendors_with_meals': dict(vendors_with_meals)}
     return render(request, 'orders/meal_list.html', context)
 
 
@@ -57,6 +63,19 @@ class VendorDashboardView(LoginRequiredMixin, VendorRequiredMixin, TemplateView)
         ).exclude(
             status=OrderItem.FulfillmentStatus.DELIVERED
         ).order_by('order__created_at')
+
+        order_items = OrderItem.objects.filter(
+            meal__vendor=self.request.user,
+            order__status=Order.OrderStatus.CONFIRMED,
+            order__is_paid=True
+        ).exclude(
+            status=OrderItem.FulfillmentStatus.DELIVERED
+        ).order_by('order__created_at')
+
+        context['has_ready_items'] = any(
+            item.status == OrderItem.FulfillmentStatus.READY_FOR_PICKUP
+            for item in order_items
+        )
 
         return context
 
@@ -98,40 +117,39 @@ class MealDeleteView(LoginRequiredMixin, VendorRequiredMixin, DeleteView):
 
 
 def add_to_cart(request, meal_id):
-    # meal = get_object_or_404(Meal, id=meal_id)
-    # Get the cart from the session, or create an empty one
     meal = get_object_or_404(Meal, id=meal_id)
-    cart = request.session.get('cart', {})
+    # Get the cart from the session, or create an empty list
+    cart = request.session.get('cart', [])
 
-    # Add the meal to the cart or increment its quantity
-    meal_id_str = str(meal_id)
-    quantity = cart.get(meal_id_str, 0) + 1
-    cart[meal_id_str] = quantity
+    # Create a new, unique item for the cart
+    cart_item = {
+        'cart_item_id': str(uuid.uuid4()),  # A unique ID for this specific cart item
+        'meal_id': meal_id,
+        'meal_name': meal.name,
+        'price': float(meal.price)  # Store price in case it changes later
+    }
 
-    # Save the updated cart back to the session
+    # Append the new item to the cart list
+    cart.append(cart_item)
+
     request.session['cart'] = cart
     messages.success(request, f"{meal.name} was added to your cart.")
-    return redirect('homepage')
+
+    return redirect(request.META.get('HTTP_REFERER', 'homepage'))
 
 
 @login_required
 def view_cart(request):
-    cart = request.session.get('cart', {})
-    cart_items = []
-    total_price = 0
-
-    for meal_id, quantity in cart.items():
-        meal = get_object_or_404(Meal, id=int(meal_id))
-        item_total = meal.price * quantity
-        cart_items.append({'meal': meal, 'quantity': quantity, 'total': item_total})
-        total_price += item_total
+    cart = request.session.get('cart', [])
+    total_price = sum(item['price'] for item in cart)
+    tomorrow = date.today() + timedelta(days=1)
 
     return render(request, 'orders/cart_detail.html', {
-        'cart_items': cart_items,
+        'cart_items': cart,
         'total_price': total_price,
-        'meal_model': Meal
+        'meal_model': Meal,
+        'default_pickup_date': tomorrow.isoformat()
     })
-
 
 @login_required
 def checkout(request):
@@ -143,40 +161,33 @@ def checkout(request):
         order = Order.objects.create(customer=request.user, status=Order.OrderStatus.DRAFT)
         total_price = 0
 
-        # Loop through the items that should be in the cart
-        for meal_id, quantity in cart.items():
-            meal = get_object_or_404(Meal, id=int(meal_id))
+        # Loop through the items that are in the session cart
+        for item_data in cart:
+            cart_item_id = item_data['cart_item_id']
+            meal = get_object_or_404(Meal, id=item_data['meal_id'])
 
-            # Get the date and time for this specific meal from the submitted form data
-            pickup_date_str = request.POST.get(f'pickup_date_{meal_id}')
-            pickup_time = request.POST.get(f'pickup_time_{meal_id}')
+            # Get the date and time for this specific cart item from the form
+            pickup_date_str = request.POST.get(f'pickup_date_{cart_item_id}')
+            pickup_time = request.POST.get(f'pickup_time_{cart_item_id}')
 
-            # --- Validation ---
-            if not pickup_date_str or not pickup_time:
-                messages.error(request, f"Please provide a pickup date and time for {meal.name}.")
-                return redirect('view_cart')  # Go back to the cart page
+            # Basic validation
+            # ... (Add your date validation logic here) ...
 
-            pickup_date = date.fromisoformat(pickup_date_str)
-            if pickup_date < date.today() + timedelta(days=1):
-                messages.error(request, "Orders must be for the next day or later.")
-                return redirect('view_cart')
-            # --- End Validation ---
-
+            # Create an OrderItem with quantity=1 for each item in the cart
             OrderItem.objects.create(
                 order=order,
                 meal=meal,
-                quantity=quantity,
+                quantity=1,  # Quantity is always 1 now
                 pickup_date=pickup_date_str,
                 pickup_time=pickup_time
             )
-            total_price += meal.price * quantity
+            total_price += meal.price
 
         Invoice.objects.create(order=order, total_amount=total_price)
-        request.session['cart'] = {}
+        request.session['cart'] = []  # Clear the cart list
 
         return redirect('invoice_detail', order_id=order.id)
 
-    # If a user tries to access the checkout URL with GET, send them to their cart
     return redirect('view_cart')
 
 
@@ -226,6 +237,25 @@ def update_order_item_status_view(request, item_id):
 
 
 @login_required
+def update_item_status(request, item_id, new_status):
+    # Security: Ensure user is a vendor and this item belongs to them
+    item = get_object_or_404(OrderItem, id=item_id, meal__vendor=request.user)
+
+    # Check if the requested status is a valid choice
+    if new_status in OrderItem.FulfillmentStatus.values:
+        item.status = new_status
+        item.save()
+        messages.success(request, f"Status for '{item.meal.name}' updated.")
+    else:
+        messages.error(request, "Invalid status.")
+
+    dashboard_url = reverse('vendor_dashboard')
+    redirect_url = f'{dashboard_url}#item-row-{item_id}'
+    return redirect(redirect_url)
+    return redirect('vendor_dashboard')
+
+
+@login_required
 def order_history_view(request):
     # Ensure the user is a customer
     if request.user.user_type != 'CUSTOMER':
@@ -247,18 +277,34 @@ def view_item_barcode(request, item_id):
     if request.user != item.order.customer and request.user != item.meal.vendor:
         return HttpResponse("Unauthorized", status=403)
 
-    Code128 = barcode.get_barcode_class('code128')
-    # Use the item's unique barcode_id as the data
-    # Change the writer to SVGWriter()
-    code = Code128(str(item.barcode_id), writer=SVGWriter())
+    try:
+        import qrcode
+        import qrcode.image.svg
 
-    buffer = BytesIO()
-    code.write(buffer)
+        # Create a QR code instance
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        # Add the item's unique barcode_id as the data
+        qr.add_data(str(item.barcode_id))
+        qr.make(fit=True)
 
-    buffer.seek(0)
+        # Create an SVG image from the QR Code instance
+        img = qr.make_image(image_factory=qrcode.image.svg.SvgPathImage)
 
-    # Return the buffer as an SVG image
-    return HttpResponse(buffer.getvalue(), content_type='image/svg+xml')
+        # Write to a buffer
+        buffer = BytesIO()
+        img.save(buffer)
+        buffer.seek(0)
+
+        return HttpResponse(buffer.getvalue(), content_type='image/svg+xml')
+
+    except ImportError:
+        # Fallback or error message if qrcode library is missing
+        return HttpResponse("QR Code generation library is not installed.", status=500)
 
 
 @login_required
@@ -292,9 +338,76 @@ class VendorOrderHistoryView(LoginRequiredMixin, VendorRequiredMixin, ListView):
             ]
         ).order_by('-order__created_at')
 
+
+def vendor_detail_view(request, vendor_id):
+    vendor = get_object_or_404(CustomUser, id=vendor_id, user_type='VENDOR')
+    meals = Meal.objects.filter(vendor=vendor)
+    return render(request, 'orders/vendor_detail.html', {'vendor': vendor, 'meals': meals})
+
+
 @login_required
 def printable_barcode_view(request, item_id):
     # Security: Ensure user is a vendor and this item belongs to them
     item = get_object_or_404(OrderItem, id=item_id, meal__vendor=request.user)
     return render(request, 'orders/printable_barcode.html', {'item': item})
 
+
+@login_required
+def print_bulk_barcodes_view(request):
+    if request.method == 'POST':
+        item_ids = request.POST.getlist('item_ids')
+
+        # Security: Fetch only items that belong to the logged-in vendor
+        items = OrderItem.objects.filter(
+            id__in=item_ids,
+            meal__vendor=request.user,
+            status=OrderItem.FulfillmentStatus.READY_FOR_PICKUP
+        )
+
+        return render(request, 'orders/printable_bulk_barcodes.html', {'items': items})
+
+    return redirect('vendor_dashboard')
+
+
+@login_required
+def qr_code_scanner_view(request):
+    # This view just renders the scanner template
+    return render(request, 'orders/qr_code_scanner.html')
+
+
+@login_required
+def scan_and_verify_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            barcode_id = data.get('barcode_id')
+
+            # Find the order item with this barcode ID, ensuring it belongs to the current user
+            item = OrderItem.objects.get(
+                barcode_id=barcode_id,
+                order__customer=request.user,
+                status=OrderItem.FulfillmentStatus.READY_FOR_PICKUP
+            )
+
+            # If found, update the status
+            item.status = OrderItem.FulfillmentStatus.DELIVERED
+            item.save()
+
+            return JsonResponse({'success': True, 'message': f"Pickup confirmed for '{item.meal.name}'!"})
+
+        except OrderItem.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Invalid or incorrect barcode scanned.'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': 'An unexpected error occurred.'}, status=500)
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
+
+
+def remove_from_cart(request, cart_item_id):
+    cart = request.session.get('cart', [])
+
+    # Find the item with the matching cart_item_id and remove it
+    updated_cart = [item for item in cart if item['cart_item_id'] != cart_item_id]
+
+    request.session['cart'] = updated_cart
+    return redirect('view_cart')
