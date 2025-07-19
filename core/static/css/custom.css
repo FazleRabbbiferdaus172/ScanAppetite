@@ -1,0 +1,41 @@
+.meal-section {
+    text-decoration: none !important; /* This removes the underline */
+    color: inherit;       /* This makes the text color normal */
+}
+
+.card-link:hover .card {
+    border-color: #0d6efd;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 767px) {
+    .mobile-cards .table thead {
+        display: none;
+    }
+    .mobile-cards .table tbody,
+    .mobile-cards .table tr,
+    .mobile-cards .table td {
+        display: block;
+        width: 100%;
+    }
+    .mobile-cards .table tr {
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+    }
+    .mobile-cards .table td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+        border: none;
+    }
+    .mobile-cards .table td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0.5rem;
+        width: 45%;
+        padding-right: 1rem;
+        text-align: left;
+        font-weight: bold;
+    }
+}
