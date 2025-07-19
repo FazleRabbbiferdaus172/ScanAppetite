@@ -1,82 +1,104 @@
 {% extends "core/base.html" %}
-
+{% load static %}
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Vendor Dashboard</h1>
-        <a href="{% url 'vendor_order_history' %}" class="btn btn-outline-secondary">View Order History</a>
-    </div>
-
-    <div class="card mb-5">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4>Your Meal Listings</h4>
-            <a href="{% url 'meal_add' %}" class="btn btn-primary">Add New Meal</a>
+    <div class="container mt-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Vendor Dashboard</h1>
+            <a href="{% url 'vendor_order_history' %}" class="btn btn-outline-secondary">View Order History</a>
         </div>
-        <div class="card-body">
-            <table class="table">
-                <tbody>
+
+        <div class="mobile-cards mb-5">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>Your Meal Listings</h4>
+                <a href="{% url 'meal_add' %}" class="btn btn-primary">Add New Meal</a>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tbody>
                     {% for meal in meals %}
-                    <tr>
-                        <td>{{ meal.name }}</td>
-                        <td class="text-end">
-                            <a href="{% url 'meal_edit' meal.pk %}" class="btn btn-sm btn-warning">Edit</a>
-                            <a href="{% url 'meal_delete' meal.pk %}" class="btn btn-sm btn-danger">Delete</a>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td data-label="Name">{{ meal.name }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'meal_edit' meal.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                                <a href="{% url 'meal_delete' meal.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                            </td>
+                        </tr>
                     {% empty %}
-                    <tr>
-                        <td>You have not added any meals yet.</td>
-                    </tr>
+                        <tr>
+                            <td>You have not added any meals yet.</td>
+                        </tr>
                     {% endfor %}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h4>Active Order Items</h4>
-        </div>
-        <div class="card-body">
-            <table class="table">
-                <thead>
+        <div class="mobile-cards">
+            <div class="card-header">
+                <h4>Active Order Items</h4>
+            </div>
+            <div class="card-body">
+                {% if has_ready_items %}
+                    <form action="{% url 'print_bulk_barcodes' %}" method="post" target="_blank">
+                    {% csrf_token %}
+                {% endif %}
+                <table class="table">
+                    <thead>
                     <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
                         <th>Order #</th>
                         <th>Meal</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
-                </thead>
-                <tbody>
+                    </thead>
+                    <tbody>
                     {% for item in order_items %}
-                    <tr>
-                        <td>{{ item.order.id }}</td>
-                        <td>{{ item.meal.name }} (Qty: {{ item.quantity }})</td>
-                        <td><span class="badge bg-info">{{ item.get_status_display }}</span></td>
-                        <td>
-                            <form action="{% url 'update_order_item_status' item.id %}" method="post">
-                                {% csrf_token %}
-                                {% if item.status == 'CONFIRMED' %}
-                                    <input type="hidden" name="new_status" value="PROCESSING">
-                                    <button type="submit" class="btn btn-sm btn-primary">Start Processing</button>
-                                {% elif item.status == 'PROCESSING' %}
-                                    <input type="hidden" name="new_status" value="READY_FOR_PICKUP">
-                                    <button type="submit" class="btn btn-sm btn-warning">Ready for Pickup</button>
-                                {% elif item.status == 'READY_FOR_PICKUP' %}
-                                    <input type="hidden" name="new_status" value="DELIVERED">
-                                    <button type="submit" class="btn btn-sm btn-success">Mark as Delivered</button>
+                        <tr id="item-row-{{ item.id }}">
+                            <td>
+                                {% if item.status == 'READY_FOR_PICKUP' %}
+                                    <input type="checkbox" name="item_ids" value="{{ item.id }}">
                                 {% endif %}
-                            </form>
-                        </td>
-                    </tr>
+                            </td>
+                            <td data-label="Order#ID">{{ item.order.id }}</td>
+                            <td data-label="Meal">{{ item.meal.name }} (Qty: {{ item.quantity }})</td>
+                            <td data-label="Status"><span class="badge bg-info">{{ item.get_status_display }}</span></td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    {% if item.status == 'READY_FOR_PICKUP' %}
+                                        <a href="{% url 'printable_barcode' item.id %}" target="_blank"
+                                           class="btn btn-sm btn-secondary">Print</a>
+                                    {% endif %}
+
+                                    {% if item.status == 'CONFIRMED' %}
+                                        <a href="{% url 'update_item_status' item.id 'PROCESSING' %}"
+                                           class="btn btn-sm btn-primary">Start Processing</a>
+                                    {% elif item.status == 'PROCESSING' %}
+                                        <a href="{% url 'update_item_status' item.id 'READY_FOR_PICKUP' %}"
+                                           class="btn btn-sm btn-warning">Ready for Pickup</a>
+                                    {% elif item.status == 'READY_FOR_PICKUP' %}
+                                        <a href="{% url 'update_item_status' item.id 'DELIVERED' %}"
+                                           class="btn btn-sm btn-success">Mark as Delivered</a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
                     {% empty %}
-                    <tr>
-                        <td colspan="4">You have no active order items.</td>
-                    </tr>
+                        <tr>
+                            <td colspan="5">You have no active order items.</td>
+                        </tr>
                     {% endfor %}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+                {% if has_ready_items %}
+                    <button type="submit" class="btn btn-primary mt-3">Print Selected Barcodes</button>
+                    </form>
+                {% endif %}
+            </div>
         </div>
     </div>
-</div>
 {% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'orders/js/dashboard.js' %}"></script>
+{% endblock scripts %}

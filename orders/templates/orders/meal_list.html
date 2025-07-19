@@ -1,34 +1,40 @@
 {% extends "core/base.html" %}
+{% load thumbnail %}
+{% block content %}
+    <div class="container mt-4">
+        <h1>Our Vendors and Meals</h1>
+        <hr>
 
-{% load thumbnail %} {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center">
-        <h1>Meals from Our Vendors</h1>
-    </div>
-    
-    <hr>
-
-    <div class="row">
-        {% for meal in meals %}
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    {% if meal.image %}
-                        {% thumbnail meal.image "300x200" crop="center" as im %}
-                        <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" class="card-img-top" alt="{{ meal.name }}">
-                        {% endthumbnail %}
-                    {% endif %}
+        {% for vendor, meals in vendors_with_meals.items %}
+            <a href="{% url 'vendor_detail' vendor.id %}" class="card-link meal-section" style="text-decoration: none">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>{{ vendor.username }}</h3>
+                    </div>
                     <div class="card-body">
-                        <h5 class="card-title">{{ meal.name }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">Vendor: {{ meal.vendor.first_name }}</h6>
-                        <p class="card-text">{{ meal.description }}</p>
-                        <p class="card-text"><strong>${{ meal.price }}</strong></p>
-                        <a href="{% url 'add_to_cart' meal.id %}" class="btn btn-primary">Add to Cart</a>
+                        <div class="row">
+                            {% for meal in meals|slice:":4" %}
+                                <div class="col-md-3">
+                                    <div class="card h-100">
+                                        {% if meal.image %}
+                                            {% thumbnail meal.image "50x50" crop="center" as im %}
+                                                <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}"
+                                                     class="card-img-top" alt="{{ meal.name }}">
+                                            {% endthumbnail %}
+                                        {% endif %}
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ meal.name }}</h5>
+                                            <p class="card-text">${{ meal.price }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
         {% empty %}
-            <p>No meals are available at the moment.</p>
+            <p>No vendors are offering meals at the moment.</p>
         {% endfor %}
     </div>
-</div>
 {% endblock %}
