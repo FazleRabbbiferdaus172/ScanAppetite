@@ -1,0 +1,27 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ vendor.username }}'s Meals</h1>
+    <hr>
+    <div class="row">
+        {% for meal in meals %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    {% if meal.image %}
+                        <img src="{{ meal.image.url }}" class="card-img-top" alt="{{ meal.name }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ meal.name }}</h5>
+                        <p class="card-text">{{ meal.description }}</p>
+                        <p class="card-text"><strong>${{ meal.price }}</strong></p>
+                        <a href="{% url 'add_to_cart' meal.id %}" class="btn btn-primary">Add to Cart</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p>This vendor has not added any meals yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

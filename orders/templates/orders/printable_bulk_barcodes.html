@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Print Selected Barcodes</title>
+    <style>
+        body { font-family: sans-serif; }
+        .barcode-item { text-align: center; page-break-inside: avoid; border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; }
+        img { max-width: 100%; height: auto; }
+        @media print {
+            body { margin: 0; }
+            .barcode-item { border: none; }
+        }
+    </style>
+</head>
+<body>
+    {% for item in items %}
+        <div class="barcode-item">
+            <h3>Order #{{ item.order.id }} - {{ item.meal.name }}</h3>
+            <p>Customer: {{ item.order.customer.username }}</p>
+            <img src="{% url 'view_item_barcode' item.id %}" alt="Pickup Barcode">
+        </div>
+    {% empty %}
+        <p>No valid items were selected for printing.</p>
+    {% endfor %}
+</body>
+</html>

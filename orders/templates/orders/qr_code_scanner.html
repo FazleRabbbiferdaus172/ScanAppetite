@@ -1,0 +1,58 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4 text-center">
+    <h2>Scan Pickup Barcode</h2>
+    <div id="reader" style="width: 100%; max-width: 500px; margin: auto;"></div>
+    <div id="result" class="mt-3"></div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const resultContainer = document.getElementById('result');
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // decodedText contains the barcode's data (our UUID)
+            resultContainer.innerHTML = `<div class="alert alert-success">Scan successful! Verifying...</div>`;
+
+            // Stop scanning after a successful scan
+            html5QrcodeScanner.clear();
+            
+            // Send the scanned barcode ID to our Django view
+            fetch(`/order-item/scan-verify/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ barcode_id: decodedText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultContainer.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                    // Redirect back to order history after a short delay
+                    setTimeout(() => { window.location.href = "{% url 'order_history' %}"; }, 2000);
+                } else {
+                    resultContainer.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultContainer.innerHTML = `<div class="alert alert-danger">An error occurred.</div>`;
+            });
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+    });
+</script>
+{% endblock scripts %}
