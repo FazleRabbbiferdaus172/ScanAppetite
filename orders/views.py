@@ -7,6 +7,7 @@ from barcode.writer import ImageWriter, SVGWriter
 from datetime import date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, TemplateView
+from django.db.models import Sum, Count
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
@@ -51,6 +52,29 @@ class VendorDashboardView(LoginRequiredMixin, VendorRequiredMixin, TemplateView)
     def get_context_data(self, **kwargs):
         # Get the default context
         context = super().get_context_data(**kwargs)
+        vendor = self.request.user
+
+        delivered_items = OrderItem.objects.filter(
+            meal__vendor=vendor,
+            status=OrderItem.FulfillmentStatus.DELIVERED
+        )
+        total_revenue = sum(item.meal.price * item.quantity for item in delivered_items)
+
+        # 2. Calculate Total Meals Sold
+        total_meals_sold = delivered_items.aggregate(total_quantity=Sum('quantity'))['total_quantity'] or 0
+
+        # 3. Find Most Popular Meals
+        # We group by meal name and count how many times each has been ordered.
+        popular_meals = OrderItem.objects.filter(meal__vendor=vendor).values(
+            'meal__name'
+        ).annotate(
+            order_count=Count('id')
+        ).order_by('-order_count')[:5]  # Get top 5
+
+        # Add statistics to the context
+        context['total_revenue'] = total_revenue
+        context['total_meals_sold'] = total_meals_sold
+        context['popular_meals'] = popular_meals
 
         # Get the list of meals for this vendor
         context['meals'] = Meal.objects.filter(vendor=self.request.user)
