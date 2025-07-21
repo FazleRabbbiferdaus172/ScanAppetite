@@ -48,6 +48,7 @@ class OrderItem(models.Model):
         PROCESSING = 'PROCESSING', 'Processing'
         READY_FOR_PICKUP = 'READY_FOR_PICKUP', 'Ready for Pickup'
         DELIVERED = 'DELIVERED', 'Delivered'
+        CANCELLED = 'CANCELLED', 'Cancelled'
 
     
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
