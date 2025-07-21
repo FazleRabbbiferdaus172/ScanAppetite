@@ -7,10 +7,12 @@
     <div class="row justify-content-center">
         <div class="col-md-6">
             <h2>Register as a Vendor</h2>
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 
-                {{ form|crispy }}
+                {{ user_form|crispy }}
+
+                {{ profile_form|crispy }}
                 
                 <button type="submit" class="btn btn-primary mt-3">Register</button>
             </form>
