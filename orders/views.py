@@ -6,6 +6,7 @@ from io import BytesIO
 from barcode.writer import ImageWriter, SVGWriter
 from datetime import date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 from django.views.generic import ListView, TemplateView
 from django.db.models import Sum, Count
 from django.views.decorators.csrf import csrf_exempt
@@ -25,12 +26,36 @@ def homepage_view(request):
     if request.user.is_authenticated and request.user.user_type == 'VENDOR':
         return redirect('vendor_dashboard')
 
-    vendors_with_meals = defaultdict(list)
-    meals = Meal.objects.select_related('vendor').all()
-    for meal in meals:
-        vendors_with_meals[meal.vendor].append(meal)
+    meals_query = Meal.objects.select_related('vendor__profile').filter(
+        vendor__profile__bank_account_number__isnull=False,
+    )
 
-    context = {'vendors_with_meals': dict(vendors_with_meals)}
+    vendors_dict = defaultdict(lambda: {'meals': [], 'profile': None, 'is_open': False})
+
+    current_time = timezone.now().time()
+
+    for meal in meals_query:
+        vendor = meal.vendor
+        profile = vendor.profile
+
+        # Store vendor data if not already stored
+        if vendor.id not in vendors_dict:
+            vendors_dict[vendor.id]['profile'] = profile
+            # Calculate is_open status for the vendor
+            if profile and profile.store_open_time and profile.store_close_time:
+                vendors_dict[vendor.id]['is_open'] = (
+                        profile.store_open_time <= current_time <= profile.store_close_time)
+
+        # Add meal to the vendor's meal list
+        vendors_dict[vendor.id]['meals'].append(meal)
+
+    # Prepare the final context list
+    vendors_with_meals = [
+        {'vendor': CustomUser.objects.get(id=vid), 'data': vdata}
+        for vid, vdata in vendors_dict.items()
+    ]
+
+    context = {'vendors_with_meals': vendors_with_meals}
     return render(request, 'orders/meal_list.html', context)
 
 
@@ -53,6 +78,10 @@ class VendorDashboardView(LoginRequiredMixin, VendorRequiredMixin, TemplateView)
         # Get the default context
         context = super().get_context_data(**kwargs)
         vendor = self.request.user
+
+        profile = getattr(vendor, 'profile', None)
+        if not profile or not profile.bank_account_number:
+            messages.warning(self.request, "Your store is inactive. Please add your bank details in 'My Store' to activate it.")
 
         delivered_items = OrderItem.objects.filter(
             meal__vendor=vendor,
@@ -175,6 +204,7 @@ def view_cart(request):
         'default_pickup_date': tomorrow.isoformat()
     })
 
+
 @login_required
 def checkout(request):
     if request.method == 'POST':
@@ -225,14 +255,15 @@ def invoice_detail_view(request, order_id):
 def process_payment_view(request, order_id):
     order = get_object_or_404(Order, id=order_id, customer=request.user)
 
-    # In a real app, payment processing logic (e.g., Stripe) would go here.
-    # For now, we'll simulate a successful payment.
+    customer_profile = getattr(request.user, 'profile', None)
+    if not customer_profile or not customer_profile.bank_account_number:
+        messages.error(request, "Payment failed. Please add your bank details to your profile before proceeding.")
+        return redirect('customer_profile')
 
     if hasattr(order, 'invoice'):
         order.invoice.status = Invoice.InvoiceStatus.PAID
         order.invoice.save()
 
-    # Update the order status to CONFIRMED
     order.status = Order.OrderStatus.CONFIRMED
     order.is_paid = True
     order.save()
@@ -366,7 +397,22 @@ class VendorOrderHistoryView(LoginRequiredMixin, VendorRequiredMixin, ListView):
 def vendor_detail_view(request, vendor_id):
     vendor = get_object_or_404(CustomUser, id=vendor_id, user_type='VENDOR')
     meals = Meal.objects.filter(vendor=vendor)
-    return render(request, 'orders/vendor_detail.html', {'vendor': vendor, 'meals': meals})
+    is_open = False
+    store_is_active = False
+    profile = getattr(vendor, 'profile', None)  # Safely get profile
+    if profile and profile.bank_account_number:
+        store_is_active = True
+    if profile and profile.store_open_time and profile.store_close_time:
+        current_time = timezone.now().time()
+        is_open = profile.store_open_time <= current_time <= profile.store_close_time
+
+    context = {
+        'vendor': vendor,
+        'meals': meals,
+        'is_open': is_open,
+        'store_is_active': store_is_active,
+    }
+    return render(request, 'orders/vendor_detail.html', context)
 
 
 @login_required
@@ -435,3 +481,23 @@ def remove_from_cart(request, cart_item_id):
 
     request.session['cart'] = updated_cart
     return redirect('view_cart')
+
+
+@login_required
+def cancel_order_view(request, order_id):
+    # Security: Get the order, ensuring it belongs to the logged-in customer and is in Draft state
+    order = get_object_or_404(
+        Order,
+        id=order_id,
+        customer=request.user,
+        status=Order.OrderStatus.DRAFT
+    )
+
+    if request.method == 'POST':
+        order.status = Order.OrderStatus.CANCELLED
+        order.save()
+        messages.success(request, f"Order #{order.id} has been cancelled.")
+        return redirect('order_history')
+
+    # If GET request, you could render a confirmation template, but for simplicity, we redirect.
+    return redirect('order_history')

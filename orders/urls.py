@@ -22,7 +22,8 @@ from .views import (
     print_bulk_barcodes_view,
     qr_code_scanner_view,
     scan_and_verify_view,
-    vendor_detail_view
+    vendor_detail_view,
+    cancel_order_view
 )
 
 urlpatterns = [
@@ -39,6 +40,7 @@ urlpatterns = [
     path('order-item/<int:item_id>/confirm-pickup/', confirm_pickup_view, name='confirm_pickup'),
     path('scan/', qr_code_scanner_view, name='scan_barcode'),
     path('order-item/scan-verify/', scan_and_verify_view, name='scan_verify_barcode'),
+    path('order/<int:order_id>/cancel/', cancel_order_view, name='cancel_order'),
 
     # Vendor views
     path('vendor/<int:vendor_id>/', vendor_detail_view, name='vendor_detail'),
