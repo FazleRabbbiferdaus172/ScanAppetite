@@ -1,27 +1,25 @@
 {% extends "core/base.html" %}
-{% load thumbnail %}
+
 {% block content %}
     <div class="container mt-4">
         <h1>Our Vendors and Meals</h1>
         <hr>
 
-        {% for vendor, meals in vendors_with_meals.items %}
-            <a href="{% url 'vendor_detail' vendor.id %}" class="card-link meal-section" style="text-decoration: none">
-                <div class="card mb-4">
-                    <div class="card-header">
+        {% for vendor_item in vendors_with_meals %}
+            {% with vendor=vendor_item.vendor data=vendor_item.data %}
+                <div class="card mb-4 {% if not data.is_open %}text-muted{% endif %}">
+                    <div class="card-header d-flex justify-content-between">
                         <h3>{{ vendor.username }}</h3>
+
+                        {% if not data.is_open %}
+                            <span class="badge bg-danger align-self-center">Store Closed</span>
+                        {% endif %}
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            {% for meal in meals|slice:":4" %}
-                                <div class="col-md-3">
+                            {% for meal in data.meals|slice:":3" %}
+                                <div class="col-12 col-sm-6 col-lg-3 mb-3">
                                     <div class="card h-100">
-                                        {% if meal.image %}
-                                            {% thumbnail meal.image "50x50" crop="center" as im %}
-                                                <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}"
-                                                     class="card-img-top" alt="{{ meal.name }}">
-                                            {% endthumbnail %}
-                                        {% endif %}
                                         <div class="card-body">
                                             <h5 class="card-title">{{ meal.name }}</h5>
                                             <p class="card-text">${{ meal.price }}</p>
@@ -29,12 +27,21 @@
                                     </div>
                                 </div>
                             {% endfor %}
+                            <div class="col-12 col-sm-6 col-lg-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body btn btn-bg btn-primary d-flex align-items-center justify-content-center"
+                                         style="cursor: pointer;"
+                                         hx-get="{% url 'vendor_detail' vendor.id %}"
+                                         hx-push-url="true"
+                                         hx-target="body">
+                                        <h5 class="text">Visit Store for more...</h5>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </a>
-        {% empty %}
-            <p>No vendors are offering meals at the moment.</p>
+            {% endwith %}
         {% endfor %}
     </div>
 {% endblock %}
