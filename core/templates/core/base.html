@@ -21,6 +21,7 @@
                 </span>
 
                 {% if user.user_type == 'CUSTOMER' %}
+                    <a href="{% url 'customer_profile' %}" class="btn btn-outline-info me-2">Profile</a>
                     <a href="{% url 'order_history' %}" class="btn btn-outline-secondary me-2">My Orders</a>
                     <a href="{% url 'view_cart' %}" class="btn btn-outline-primary me-2">
                         Cart
@@ -28,6 +29,9 @@
                             <span class="badge bg-danger">{{ cart_item_count }}</span>
                         {% endif %}
                     </a>
+                {% elif user.user_type == 'VENDOR' %}
+                    <a href="{% url 'vendor_dashboard' %}" class="btn btn-outline-info me-2">Dashboard</a>
+                    <a href="{% url 'store_profile' %}" class="btn btn-outline-secondary me-2">My Store</a>
                 {% endif %}
 
                 <form method="post" action="{% url 'logout' %}" class="d-inline">
