@@ -15,7 +15,7 @@ class CustomerRegistrationView(CreateView):
     model = CustomUser
     form_class = CustomerRegistrationForm
     template_name = 'users/register_customer.html'
-    success_url = reverse_lazy('login') # Redirect to login after success
+    success_url = reverse_lazy('login')
 
     def form_valid(self, form):
         user = form.save(commit=False)
@@ -24,6 +24,7 @@ class CustomerRegistrationView(CreateView):
         Profile.objects.create(user=user)
         login(self.request, user)
         return redirect('homepage')
+
 
 class VendorRegistrationView(CreateView):
     def get(self, request):
@@ -55,11 +56,12 @@ class VendorRegistrationView(CreateView):
                 'user_form': user_form,
                 'profile_form': profile_form
             })
-    
+
 
 @login_required
 def login_redirect_view(request):
     return redirect('homepage')
+
 
 class CustomerProfileView(LoginRequiredMixin, UpdateView):
     model = Profile
@@ -69,6 +71,7 @@ class CustomerProfileView(LoginRequiredMixin, UpdateView):
 
     def get_object(self):
         return self.request.user.profile
+
 
 class StoreProfileView(LoginRequiredMixin, UpdateView):
     model = Profile

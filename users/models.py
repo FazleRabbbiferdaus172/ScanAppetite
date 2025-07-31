@@ -18,6 +18,7 @@ class Profile(models.Model):
     store_close_time = models.TimeField(null=True, blank=True, default='22:00')
     bank_account_number = models.CharField(max_length=20, blank=True)
     bank_routing_number = models.CharField(max_length=20, blank=True)
+    is_approved = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"

@@ -62,7 +62,7 @@ def homepage_view(request):
 class MealListView(ListView):
     model = Meal
     template_name = 'orders/meal_list.html'
-    context_object_name = 'meals'  # The name of the variable in the template
+    context_object_name = 'meals'
 
 
 class VendorRequiredMixin(UserPassesTestMixin):
@@ -70,7 +70,6 @@ class VendorRequiredMixin(UserPassesTestMixin):
         return self.request.user.is_authenticated and self.request.user.user_type == 'VENDOR'
 
 
-# View for the Vendor's Dashboard (lists their own meals)
 class VendorDashboardView(LoginRequiredMixin, VendorRequiredMixin, TemplateView):
     template_name = 'orders/vendor_dashboard.html'
 
@@ -224,10 +223,6 @@ def checkout(request):
             pickup_date_str = request.POST.get(f'pickup_date_{cart_item_id}')
             pickup_time = request.POST.get(f'pickup_time_{cart_item_id}')
 
-            # Basic validation
-            # ... (Add your date validation logic here) ...
-
-            # Create an OrderItem with quantity=1 for each item in the cart
             OrderItem.objects.create(
                 order=order,
                 meal=meal,
@@ -312,12 +307,9 @@ def update_item_status(request, item_id, new_status):
 
 @login_required
 def order_history_view(request):
-    # Ensure the user is a customer
     if request.user.user_type != 'CUSTOMER':
         return redirect('homepage')
 
-    # Fetch all orders placed by this customer, ordering by the most recent
-    # Prefetch the related items and meals to avoid extra database queries
     orders = Order.objects.filter(customer=request.user).prefetch_related(
         'items__meal'
     ).order_by('-created_at')
