@@ -1,19 +1,24 @@
 {% extends "core/base.html" %}
-{% load crispy_forms_tags %}
 
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <h2>Your Profile</h2>
-            <hr>
-            <form method="post">
-                {% csrf_token %}
-                <h2>Bank Details</h2>
-                {{ form|crispy }}
-                <button type="submit" class="btn btn-primary mt-3">Update Bank Details</button>
-                <hr>
-            </form>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Your Profile</h2>
+                </div>
+                <div class="card-body">
+                    <p><strong>Username:</strong> {{ user.username }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Full Name:</strong> {{ user.get_full_name|default:"Not set" }}</p>
+                    <p><strong>Joined:</strong> {{ user.date_joined|date:"F j, Y" }}</p>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a href="{% url 'order_history' %}" class="btn btn-primary">View My Order History</a>
+            </div>
         </div>
     </div>
 </div>
