@@ -1,10 +1,13 @@
 import uuid
 import json
 import barcode
+import pytz
 from collections import defaultdict
 from io import BytesIO
 from barcode.writer import ImageWriter, SVGWriter
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.generic import ListView, TemplateView
@@ -27,12 +30,11 @@ def homepage_view(request):
         return redirect('vendor_dashboard')
 
     meals_query = Meal.objects.select_related('vendor__profile').filter(
+        vendor__profile__is_approved=True,
         vendor__profile__bank_account_number__isnull=False,
     )
 
     vendors_dict = defaultdict(lambda: {'meals': [], 'profile': None, 'is_open': False})
-
-    current_time = timezone.now().time()
 
     for meal in meals_query:
         vendor = meal.vendor
@@ -41,10 +43,8 @@ def homepage_view(request):
         # Store vendor data if not already stored
         if vendor.id not in vendors_dict:
             vendors_dict[vendor.id]['profile'] = profile
-            # Calculate is_open status for the vendor
-            if profile and profile.store_open_time and profile.store_close_time:
-                vendors_dict[vendor.id]['is_open'] = (
-                        profile.store_open_time <= current_time <= profile.store_close_time)
+            # The calculation is now done in the model property!
+            vendors_dict[vendor.id]['is_open'] = profile.is_open
 
         # Add meal to the vendor's meal list
         vendors_dict[vendor.id]['meals'].append(meal)
@@ -251,9 +251,9 @@ def process_payment_view(request, order_id):
     order = get_object_or_404(Order, id=order_id, customer=request.user)
 
     customer_profile = getattr(request.user, 'profile', None)
-    if not customer_profile or not customer_profile.bank_account_number:
-        messages.error(request, "Payment failed. Please add your bank details to your profile before proceeding.")
-        return redirect('customer_profile')
+    # if not customer_profile or not customer_profile.bank_account_number:
+    #     messages.error(request, "Payment failed. Please add your bank details to your profile before proceeding.")
+    #     return redirect('customer_profile')
 
     if hasattr(order, 'invoice'):
         order.invoice.status = Invoice.InvoiceStatus.PAID
@@ -389,14 +389,16 @@ class VendorOrderHistoryView(LoginRequiredMixin, VendorRequiredMixin, ListView):
 def vendor_detail_view(request, vendor_id):
     vendor = get_object_or_404(CustomUser, id=vendor_id, user_type='VENDOR')
     meals = Meal.objects.filter(vendor=vendor)
+    profile = getattr(vendor, 'profile', None)  # Safely get profile
+
+    # Default values
     is_open = False
     store_is_active = False
-    profile = getattr(vendor, 'profile', None)  # Safely get profile
-    if profile and profile.bank_account_number:
-        store_is_active = True
-    if profile and profile.store_open_time and profile.store_close_time:
-        current_time = timezone.now().time()
-        is_open = profile.store_open_time <= current_time <= profile.store_close_time
+
+    if profile:
+        store_is_active = bool(profile.bank_account_number)
+        # Use the new, timezone-aware property from the model
+        is_open = profile.is_open
 
     context = {
         'vendor': vendor,
