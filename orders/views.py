@@ -23,6 +23,7 @@ from django.http import HttpResponse, JsonResponse
 from .models import Meal, Order, OrderItem, Invoice
 from users.models import CustomUser
 from .forms import MealForm
+import stripe
 
 
 def homepage_view(request):
@@ -243,7 +244,7 @@ def checkout(request):
 @login_required
 def invoice_detail_view(request, order_id):
     order = get_object_or_404(Order, id=order_id, customer=request.user)
-    return render(request, 'orders/invoice_detail.html', {'order': order})
+    return render(request, 'orders/invoice_detail.html', {'order': order, 'STRIPE_PUBLISHABLE_KEY': settings.STRIPE_PUBLISHABLE_KEY})
 
 
 @login_required
@@ -495,3 +496,42 @@ def cancel_order_view(request, order_id):
 
     # If GET request, you could render a confirmation template, but for simplicity, we redirect.
     return redirect('order_history')
+
+# @csrf_exempt
+@login_required
+def create_checkout_session(request, order_id):
+    order = get_object_or_404(Order, id=order_id, customer=request.user)
+
+    if not hasattr(order, 'invoice'):
+        return JsonResponse({'error': 'Invoice not found for this order.'}, status=400)
+
+    invoice = order.invoice
+
+    if invoice.status == Invoice.InvoiceStatus.PAID:
+        return JsonResponse({'error': 'This invoice has already been paid.'}, status=400)
+
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': f'Order #{order.id} Invoice',
+                    },
+                    'unit_amount': int(invoice.total_amount * 100),  # Amount in cents
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            ui_mode='embedded',
+            # Use client_reference_id to pass your internal order ID
+            client_reference_id=order.id,
+            # Update the return_url to use the {CHECKOUT_SESSION_ID} template variable
+            return_url="http://"+request.get_host() + reverse('process_payment', args=[order.id]) + '?session_id={CHECKOUT_SESSION_ID}',
+        )
+        return JsonResponse({'clientSecret': checkout_session.client_secret})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
