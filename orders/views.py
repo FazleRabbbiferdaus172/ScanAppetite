@@ -22,6 +22,7 @@ from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from .models import Meal, Order, OrderItem, Invoice
 from users.models import CustomUser
+from users.mixins import VendorRequiredMixin
 from .forms import MealForm
 
 
@@ -65,9 +66,9 @@ class MealListView(ListView):
     context_object_name = 'meals'
 
 
-class VendorRequiredMixin(UserPassesTestMixin):
-    def test_func(self):
-        return self.request.user.is_authenticated and self.request.user.user_type == 'VENDOR'
+# class VendorRequiredMixin(UserPassesTestMixin):
+#     def test_func(self):
+#         return self.request.user.is_authenticated and self.request.user.user_type == 'VENDOR'
 
 
 class VendorDashboardView(LoginRequiredMixin, VendorRequiredMixin, TemplateView):

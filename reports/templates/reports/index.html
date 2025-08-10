@@ -1,0 +1,19 @@
+{% extends "core/base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Reports</h2>
+    <p>Select a report to view.</p>
+    <div class="list-group">
+        {% if request.user.is_superuser %}
+        <a href="{% url 'reports:admin_report' %}" class="list-group-item list-group-item-action">
+            Site-wide Admin Report
+        </a>
+        {% endif %}
+        {% if request.user.user_type == 'VENDOR' %}
+        <a href="{% url 'reports:vendor_report' %}" class="list-group-item list-group-item-action">
+            My Vendor Report
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

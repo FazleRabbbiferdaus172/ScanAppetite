@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'users.apps.UsersConfig',
     'orders.apps.OrdersConfig',
+    'reports.apps.ReportsConfig',
     
     'django.contrib.admin',
     'django.contrib.auth',

@@ -32,6 +32,9 @@
                 {% elif user.user_type == 'VENDOR' %}
                     <a href="{% url 'vendor_dashboard' %}" class="btn btn-outline-info me-2">Dashboard</a>
                     <a href="{% url 'store_profile' %}" class="btn btn-outline-secondary me-2">My Store</a>
+                    {% if user.user_type == 'VENDOR' %}
+                            <a class="btn btn-outline-secondary me-2" href="{% url 'reports:vendor_report' %}">Reports</a>
+                    {% endif %}
                 {% endif %}
 
                 <form method="post" action="{% url 'logout' %}" class="d-inline">
