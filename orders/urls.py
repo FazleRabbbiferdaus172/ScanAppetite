@@ -23,7 +23,8 @@ from .views import (
     qr_code_scanner_view,
     scan_and_verify_view,
     vendor_detail_view,
-    cancel_order_view
+    cancel_order_view,
+    create_checkout_session
 )
 
 urlpatterns = [
@@ -41,6 +42,7 @@ urlpatterns = [
     path('scan/', qr_code_scanner_view, name='scan_barcode'),
     path('order-item/scan-verify/', scan_and_verify_view, name='scan_verify_barcode'),
     path('order/<int:order_id>/cancel/', cancel_order_view, name='cancel_order'),
+    path('create-checkout-session/<int:order_id>/', create_checkout_session, name='create_checkout_session'),
 
     # Vendor views
     path('vendor/<int:vendor_id>/', vendor_detail_view, name='vendor_detail'),
