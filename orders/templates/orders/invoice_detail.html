@@ -1,21 +1,29 @@
 {% extends "core/base.html" %}
+{% load static %}
+
+{% block header_scripts %}
+<script src="https://js.stripe.com/basil/stripe.js"></script>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2>Invoice for Order #{{ order.id }}</h2>
-    <p>Status: <span class="badge bg-warning text-dark">{{ order.invoice.get_status_display }}</span></p>
-    <hr>
-    <h4>Order Items</h4>
-    <ul>
-        {% for item in order.items.all %}
-            <li>{{ item.quantity }} x {{ item.meal.name }} - ${{ item.meal.price }} each</li>
-        {% endfor %}
-    </ul>
-    <h3>Total Amount: ${{ order.invoice.total_amount }}</h3>
+<div class="container mt-5" data-order-id={{ order.id }} data-stripe-pk={{ STRIPE_PUBLISHABLE_KEY }}>
+{#    <h2>Invoice for Order #{{ order.id }}</h2>#}
+{#    <p>Status: <span class="badge bg-warning text-dark">{{ order.invoice.get_status_display }}</span></p>#}
+{#    <hr>#}
+{#    <h4>Order Items</h4>#}
+{#    <ul>#}
+{#        {% for item in order.items.all %}#}
+{#            <li>{{ item.quantity }} x {{ item.meal.name }} - ${{ item.meal.price }} each</li>#}
+{#        {% endfor %}#}
+{#    </ul>#}
+{#    <h3>Total Amount: ${{ order.invoice.total_amount }}</h3>#}
 
-    <form action="{% url 'process_payment' order.id %}" method="post" class="mt-4">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-lg btn-success">Pay Now</button>
-    </form>
+    <div id="checkout">
+        <!-- Checkout will insert the payment form here -->
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'orders/js/stripe_initialize.js' %}" defer></script>
 {% endblock %}
