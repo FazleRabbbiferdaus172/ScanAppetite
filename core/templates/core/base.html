@@ -6,44 +6,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ScanAppetite</title>
     <link rel="stylesheet" href="{% static 'css/custom.css' %}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/custom-bootstrap.css' %}">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"> -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="{% static 'bootstrap-icons.css' %}">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="{% url 'homepage' %}">ScanAppetite</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
         <div class="d-flex align-items-center ms-auto">
-            {% if user.is_authenticated %}
-                <span class="navbar-text me-3">
-                    Welcome, {{ user.first_name }}!
-                </span>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a href="{% url 'view_cart' %}" class="nav-link">
+                                <i class="bi bi-cart text-primary"></i>
+                                {% if cart_item_count > 0 %}
+                                    <span class="badge bg-danger">{{ cart_item_count }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <span class="navbar-text me-3">
+                            Welcome, {{ user.first_name }}!
+                        </span>
 
-                {% if user.user_type == 'CUSTOMER' %}
-                    <a href="{% url 'customer_profile' %}" class="btn btn-outline-info me-2">Profile</a>
-                    <a href="{% url 'order_history' %}" class="btn btn-outline-secondary me-2">My Orders</a>
-                    <a href="{% url 'view_cart' %}" class="btn btn-outline-primary me-2">
-                        Cart
-                        {% if cart_item_count > 0 %}
-                            <span class="badge bg-danger">{{ cart_item_count }}</span>
+                        {% if user.user_type == 'CUSTOMER' %}
+                        <li class="nav-item">
+                            <a href="{% url 'customer_profile' %}" class="nav-link">Profile</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'order_history' %}" class="nav-link">My Orders</a>
+
+                        </li>
+                        
+                        {% elif user.user_type == 'VENDOR' %}
+                        <li class="nav-item">
+                            <a href="{% url 'vendor_dashboard' %}" class="nav-link">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'store_profile' %}" class="nav-link">My Store</a>
+                        </li>
+                            {% if user.user_type == 'VENDOR' %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'reports:vendor_report' %}">Reports</a>
+                                </li>
+                            {% endif %}
                         {% endif %}
-                    </a>
-                {% elif user.user_type == 'VENDOR' %}
-                    <a href="{% url 'vendor_dashboard' %}" class="btn btn-outline-info me-2">Dashboard</a>
-                    <a href="{% url 'store_profile' %}" class="btn btn-outline-secondary me-2">My Store</a>
-                    {% if user.user_type == 'VENDOR' %}
-                            <a class="btn btn-outline-secondary me-2" href="{% url 'reports:vendor_report' %}">Reports</a>
-                    {% endif %}
-                {% endif %}
 
-                <form method="post" action="{% url 'logout' %}" class="d-inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Logout</button>
-                </form>
-            {% else %}
-                <a href="{% url 'login' %}" class="btn btn-success">Login</a>
-            {% endif %}
+                        <form method="post" action="{% url 'logout' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn nav-link text-danger">Logout</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-success">Login</a>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
     </div>
 </nav>

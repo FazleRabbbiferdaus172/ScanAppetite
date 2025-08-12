@@ -1,0 +1,67 @@
+/* --- Theme Variables --- */
+:root {
+    /* Colors */
+    --gray-color: #B0B0B0; /* Neutral gray */
+    --light-peach-color: #FFD2B3; /* Light peach */
+    --orange-color: #FF8A50; /* Vibrant orange */
+    --deep-orange-color: #FF5722; /* Deep orange */
+
+    /* Backgrounds */
+    --background-color: #F9F9F9; /* Light gray for backgrounds */
+    --surface-color: #FFFFFF; /* White for cards and surfaces */
+
+    /* Text */
+    --text-primary: #2E2E2E; /* Dark gray for main text */
+    --text-secondary: #8A8A8A; /* Light gray for secondary text */
+
+    /* Borders */
+    --border-color: #EAEAEA; /* Light gray for borders */
+
+    /* Font Sizes */
+    --font-size-small: 0.875rem; /* Small text */
+    --font-size-medium: 1rem; /* Default text */
+    --font-size-large: 1.25rem; /* Large text */
+
+    /* Spacing */
+    --spacing-small: 0.5rem;
+    --spacing-medium: 1rem;
+    --spacing-large: 2rem;
+
+    /* Borders */
+    --border-radius-small: 0.5rem;
+    --border-radius-medium: 1rem;
+    --border-radius-large: 1.5rem;
+
+    /* Shadows */
+    --shadow-small: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0px 8px 16px rgba(0, 0, 0, 0.1);
+    --shadow-large: 0px 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Custom Classes --- */
+.btn-custom {
+    background-color: var(--primary-color);
+    color: var(--background-color);
+    border-radius: var(--border-radius-medium);
+    box-shadow: var(--shadow-small);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.btn-custom:hover {
+    background-color: #E03A3A; /* Slightly darker red */
+    box-shadow: var(--shadow-medium);
+}
+
+.card-custom {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-medium);
+    box-shadow: var(--shadow-small);
+    padding: var(--spacing-medium);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-custom:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-medium);
+}

@@ -1,0 +1,18 @@
+/* filepath: /home/ferdaus/workspace/personal/code/ScanAppetite/core/static/scss/custom-bootstrap.scss */
+
+/* Use Bootstrap's functions and variables */
+// @import "../../../node_modules/bootstrap/scss/functions";
+// @import "../../../node_modules/bootstrap/scss/variables";
+
+/* Override Bootstrap's default theme colors */
+$primary: #FF4E00; /* Deep orange */
+$secondary: #F4F1DE; /* Vibrant orange */
+$light: #FFD2B3; /* Light peach */
+$dark: #2E2E2E; /* Dark gray */
+$gray: #B0B0B0; /* Neutral gray */
+$background: #262322; /* Light gray for backgrounds */
+$surface: #FFFFFF; /* White for cards and surfaces */
+$body-bg: #fff5b3; /* Body background color */
+
+/* Import Bootstrap's components */
+@import "../../../node_modules/bootstrap/scss/bootstrap";
