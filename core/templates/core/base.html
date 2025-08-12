@@ -22,7 +22,6 @@
         <div class="d-flex align-items-center ms-auto">
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
-                    {% if user.is_authenticated %}
                         <li class="nav-item">
                             <a href="{% url 'view_cart' %}" class="nav-link">
                                 <i class="bi bi-cart text-primary"></i>
@@ -31,6 +30,7 @@
                                 {% endif %}
                             </a>
                         </li>
+                    {% if user.is_authenticated %}
                         <span class="navbar-text me-3">
                             Welcome, {{ user.first_name }}!
                         </span>
