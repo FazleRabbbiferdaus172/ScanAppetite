@@ -41,3 +41,6 @@ db.sqlite3-journal
 Thumbs.db
 /deployment.md
 /docs/
+
+# npm packages
+node_modules/
