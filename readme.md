@@ -25,7 +25,7 @@ ScanAppetite is a modern, web-based meal ordering and pickup confirmation system
 ## Tech Stack
 
 * **Backend:** Django, Django REST Framework (for potential API)
-* **Frontend:** Django Templates, HTML5, Bootstrap 5, HTMX (for dynamic UI updates)
+* **Frontend:** Django Templates, HTML5, Bootstrap 5, node, ,css, scss, HTMX (for dynamic UI updates)
 * **Database:** SQLite (for development), PostgreSQL (recommended for production)
 * **Image Handling:** `Pillow`, `sorl-thumbnail` (for creating thumbnails)
 * **Barcode/QR Code:** `python-barcode`, `qrcode`
