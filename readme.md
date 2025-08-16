@@ -18,6 +18,7 @@ ScanAppetite is a modern, web-based meal ordering and pickup confirmation system
 - **Order Fulfillment:** View active order items and update their status through a defined workflow (Confirmed → Processing → Ready for Pickup → Delivered).
 - **Barcode Generation:** Generate and print unique barcodes for each order item that is ready for pickup.
 - **Bulk Printing:** Select multiple "Ready for Pickup" items and print all their barcodes on a single page.
+- ** Rporting:** Vendors can view and print pdf reports date wise.
 
 ### Admin Features
 - **Full Site Management:** Use the built-in Django Admin site to manage all users, orders, meals, and invoices.
