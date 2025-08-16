@@ -35,6 +35,7 @@ ScanAppetite is a modern, web-based meal ordering and pickup confirmation system
 ## Prerequisites
 
 -   Python 3.8+
+-   node
 -   `pip` (Python package installer)
 -   Git
 
