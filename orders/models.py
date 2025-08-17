@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db import models
 import uuid
 
+# Todo: need to separate this into multiple file or app
 class Meal(models.Model):
     class TimeSlots(models.TextChoices):
         LUNCH_1200 = '12:00', '12:00 PM'

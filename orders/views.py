@@ -25,7 +25,7 @@ from users.models import CustomUser
 from users.mixins import VendorRequiredMixin
 from .forms import MealForm
 
-
+# Todo: need to separate this into multiple file or models
 def homepage_view(request):
     if request.user.is_authenticated and request.user.user_type == 'VENDOR':
         return redirect('vendor_dashboard')

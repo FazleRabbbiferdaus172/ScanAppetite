@@ -6,6 +6,7 @@ from datetime import date, time
 from users.models import CustomUser, Profile
 from .models import Meal, Order, OrderItem
 
+# Todo: need more test cases before we start refactoring, maybe mix of TDD approach will be good if this is separated into multiple files
 class OrderFlowTests(TestCase):
     """Tests the full customer order flow from homepage to checkout."""
 

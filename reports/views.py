@@ -32,6 +32,8 @@ class ReportIndexView(LoginRequiredMixin, TemplateView):
     """Directs users to the correct report based on their role."""
     template_name = 'reports/index.html'
 
+
+# Todo: downloaded pdf reports should have different kind of structure as current one just dumps the whole html to a pfd
 class AdminReportView(LoginRequiredMixin, AdminRequiredMixin, PDFReportMixin, TemplateView):
     template_name = 'reports/admin_report.html'
 
