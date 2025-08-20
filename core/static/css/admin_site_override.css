@@ -1,0 +1,7 @@
+html[data-theme="light"], :root {
+    --primary: #FF4E00;
+    --secondary: #a53800;
+    --body-bg: #fff5b3;
+    --breadcrumbs-bg: #3e1300;
+    --darkened-bg: #ffdb5e;
+}
