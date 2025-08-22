@@ -14,6 +14,7 @@ from django.db.models import Sum, Count, F
 class PDFReportMixin:
     """A mixin to handle PDF generation for any report view."""
     def render_to_pdf(self, template_name, context):
+        context['request'] = self.request
         html_string = render_to_string(template_name, context)
         html = HTML(string=html_string, base_url=self.request.build_absolute_uri())
         pdf = html.write_pdf()

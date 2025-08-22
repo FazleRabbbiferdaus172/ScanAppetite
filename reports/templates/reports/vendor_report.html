@@ -1,27 +1,28 @@
 {% extends "core/base.html" %}
+{% load url_helpers %}
 {% block content %}
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Your Vendor Report</h2>
-        <a href="{{ request.get_full_path }}?format=pdf" class="btn btn-primary">Download as PDF</a>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Your Vendor Report</h2>
+            <a href="?{% url_replace format='pdf' %}" class="btn btn-primary">Download as PDF</a>
+        </div>
+
+        <form method="get" class="row g-3 mb-4 p-3 border rounded">
+            <div class="col-md-5">
+                <label for="date_from" class="form-label">From</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
+            </div>
+            <div class="col-md-5">
+                <label for="date_to" class="form-label">To</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-success w-100">Filter</button>
+            </div>
+        </form>
+
+        <h4>Summary for Selected Period</h4>
+        <p><strong>Your Total Revenue:</strong> ${{ total_revenue|floatformat:2 }}</p>
+        <p><strong>Total Meals Sold:</strong> {{ total_meals_sold }}</p>
     </div>
-
-    <form method="get" class="row g-3 mb-4 p-3 border rounded">
-        <div class="col-md-5">
-            <label for="date_from" class="form-label">From</label>
-            <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
-        </div>
-        <div class="col-md-5">
-            <label for="date_to" class="form-label">To</label>
-            <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-success w-100">Filter</button>
-        </div>
-    </form>
-
-    <h4>Summary for Selected Period</h4>
-    <p><strong>Your Total Revenue:</strong> ${{ total_revenue|floatformat:2 }}</p>
-    <p><strong>Total Meals Sold:</strong> {{ total_meals_sold }}</p>
-</div>
 {% endblock %}
