@@ -24,5 +24,67 @@
         <h4>Summary for Selected Period</h4>
         <p><strong>Your Total Revenue:</strong> ${{ total_revenue|floatformat:2 }}</p>
         <p><strong>Total Meals Sold:</strong> {{ total_meals_sold }}</p>
+
+        <!-- Detailed Sales Table -->
+        <h4 class="mt-5">Detailed Sales</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Meal</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order_items %}
+                        <tr>
+                            <td>#{{ item.order.id }}</td>
+                            <td>{{ item.order.created_at|date:"Y-m-d H:i" }}</td>
+                            <td>{{ item.meal.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>${{ item.meal.price|floatformat:2 }}</td>
+                            <td>${{ item.meal.price|floatformat:2 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No sales found for the selected period.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Top Selling Meals Table -->
+        <h4 class="mt-5">Top Selling Meals</h4>
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Rank</th>
+                        <th>Meal</th>
+                        <th>Quantity Sold</th>
+                        <th>Total Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for meal in top_meals %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ meal.meal__name }}</td>
+                            <td>{{ meal.total_quantity_sold }}</td>
+                            <td>${{ meal.total_revenue|floatformat:2 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">No meals sold in the selected period.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 {% endblock %}
