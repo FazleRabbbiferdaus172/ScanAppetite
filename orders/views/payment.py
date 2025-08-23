@@ -28,7 +28,8 @@ def checkout(request):
                 meal=meal,
                 quantity=1,  # Quantity is always 1 now
                 pickup_date=pickup_date_str,
-                pickup_time=pickup_time
+                pickup_time=pickup_time,
+                price=meal.price,
             )
             total_price += meal.price
 

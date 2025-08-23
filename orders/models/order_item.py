@@ -22,6 +22,12 @@ class OrderItem(models.Model):
     barcode_id = models.UUIDField(default=uuid.uuid4, editable=False)
     pickup_date = models.DateField(default=date.today)
     pickup_time = models.CharField(default=Meal.TimeSlots.LUNCH_1200, max_length=10, choices=Meal.TimeSlots.choices)
+    price = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+
+    @property
+    def sub_total(self):
+        return self.price * self.quantity
+
 
     def __str__(self):
         return f"{self.quantity} of {self.meal.name}"

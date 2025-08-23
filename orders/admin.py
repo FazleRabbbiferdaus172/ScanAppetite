@@ -21,8 +21,12 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display = ('order', 'total_amount', 'status')
     list_filter = ('status',)
 
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = ('id', 'order', 'meal', 'quantity', 'price','sub_total', 'status')
+    list_filter = ('status',)
+
 # Register with the custom admin site
 custom_admin_site.register(Meal, MealAdmin)
 custom_admin_site.register(Order, OrderAdmin)
 custom_admin_site.register(Invoice, InvoiceAdmin)
-custom_admin_site.register(OrderItem)
+custom_admin_site.register(OrderItem, OrderItemAdmin)
