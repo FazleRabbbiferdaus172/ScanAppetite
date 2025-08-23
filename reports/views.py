@@ -1,10 +1,15 @@
+from weasyprint import HTML
+from datetime import datetime, timedelta
+
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from weasyprint import HTML
-from datetime import datetime, timedelta
+from weasyprint import HTML, CSS
+from django.contrib.staticfiles import finders
+from django.conf import settings
+import os
 
 from orders.models import Invoice, OrderItem
 from users.models import CustomUser
@@ -12,21 +17,41 @@ from users.mixins import AdminRequiredMixin, VendorRequiredMixin
 from django.db.models import Sum, Count, F
 
 class PDFReportMixin:
-    """A mixin to handle PDF generation for any report view."""
-    def render_to_pdf(self, template_name, context):
-        context['request'] = self.request
-        html_string = render_to_string(template_name, context)
-        html = HTML(string=html_string, base_url=self.request.build_absolute_uri())
-        pdf = html.write_pdf()
-        
+    """
+    A mixin that can be used to render a PDF report.
+    """
+    def render_to_pdf(self, template_src, context_dict, request):
+        # Render the HTML string from the template
+        html_string = render_to_string(template_src, context_dict, request=request)
+
+        # Find the absolute path to the main CSS file
+        # This is the crucial step for styling the PDF
+        css_path = finders.find('css/custom-bootstrap.css')
+
+        # Create a list of WeasyPrint CSS objects
+        stylesheets = []
+        if css_path:
+            stylesheets.append(CSS(css_path))
+        else:
+            # Optional: handle case where CSS is not found
+            print("Warning: custom-bootstrap.css not found for PDF rendering.")
+
+        # Create a WeasyPrint HTML object
+        # The base_url is important for resolving relative paths for images, etc.
+        html = HTML(string=html_string, base_url=request.build_absolute_uri())
+
+        # Generate the PDF
+        pdf = html.write_pdf(stylesheets=stylesheets)
+
+        # Create the HTTP response
         response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="report.pdf"'
+        response['Content-Disposition'] = 'attachment; filename="vendor-report.pdf"'
         return response
 
     def get(self, request, *args, **kwargs):
         if request.GET.get('format') == 'pdf':
             context = self.get_context_data(**kwargs)
-            return self.render_to_pdf(self.template_name, context)
+            return self.render_to_pdf(self.template_name, context, request)
         return super().get(request, *args, **kwargs)
 
 class ReportIndexView(LoginRequiredMixin, TemplateView):
@@ -74,10 +99,20 @@ class VendorReportView(LoginRequiredMixin, VendorRequiredMixin, PDFReportMixin, 
             date_to = datetime.strptime(date_to_str, '%Y-%m-%d') + timedelta(days=1)
             items = items.filter(order__created_at__range=(date_from, date_to))
 
-        context['total_revenue'] = items.annotate(
-            item_total=F('quantity') * F('meal__price')
-        ).aggregate(total=Sum('item_total'))['total'] or 0
+        # Calculate total revenue and meals sold using the meal's price
+        total_revenue_agg = items.aggregate(total=Sum(F('quantity') * F('meal__price')))
+        context['total_revenue'] = total_revenue_agg['total'] or 0
         context['total_meals_sold'] = items.aggregate(total=Sum('quantity'))['total'] or 0
+
+        # Query for Top Selling Meals table using the meal's price
+        top_meals = items.values('meal__name').annotate(
+            total_quantity_sold=Sum('quantity'),
+            total_revenue=Sum(F('quantity') * F('meal__price'))
+        ).order_by('-total_quantity_sold')
+
+        # Pass data to the template context
+        context['order_items'] = items.select_related('order', 'meal') # For Detailed Sales table
+        context['top_meals'] = top_meals # For Top Selling Meals table
         context['date_from'] = date_from_str
         context['date_to'] = date_to_str
         return context
