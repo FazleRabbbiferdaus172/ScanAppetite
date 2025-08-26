@@ -99,3 +99,5 @@ The application will be available at `http://127.0.0.1:8000/`
 2. Vendor: Register a new user via the "Register as a Vendor" page. Log in, and you will be redirected to your Vendor Dashboard at `/dashboard/`. From there, you can add meals.
 
 3. Customer: Register a new user via the "Register as a Customer" page. Log in, and you will see the homepage. You can add meals to your cart, proceed to the cart to schedule pickup times, and complete the checkout process.
+
+4. Report: Generate and download pdf reports
