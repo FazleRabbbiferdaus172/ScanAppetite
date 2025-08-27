@@ -5,6 +5,21 @@ from django.shortcuts import redirect, render
 from orders.models import Meal
 from users.models import CustomUser
 
+from django.shortcuts import render, redirect
+from django.views.generic import TemplateView, ListView
+
+# Create your views here.
+
+class LandingPageView(TemplateView):
+    template_name = 'orders/landing_page.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        # If user is already logged in, redirect them to the homepage
+        if request.user.is_authenticated:
+            return redirect('homepage')
+        return super().dispatch(request, *args, **kwargs)
+
+
 
 def homepage_view(request):
     if request.user.is_authenticated and request.user.user_type == 'VENDOR':

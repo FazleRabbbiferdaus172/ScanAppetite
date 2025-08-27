@@ -1,0 +1,66 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="landing-page">
+    <!-- Hero Section -->
+    <section class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold">Scan, Order, Enjoy. Effortlessly.</h1>
+            <p class="lead col-lg-8 mx-auto">
+                Discover delicious meals from local vendors. Simply scan a QR code to view menus and place your order instantly. No apps, no waiting.
+            </p>
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
+                <a href="{% url 'homepage' %}" class="btn btn-primary btn-lg px-4 gap-3">Find Food Now</a>
+                <a href="{% url 'register_vendor' %}" class="btn btn-light btn-lg px-4">Become a Vendor</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="container my-5">
+        <h2 class="text-center mb-5">How It Works</h2>
+        <div class="row text-center g-4">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-qr-code-scan display-3 text-primary mb-3"></i>
+                        <h4 class="card-title">1. Scan</h4>
+                        <p class="card-text">Use your phone's camera to scan the QR code at your location.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-card-list display-3 text-primary mb-3"></i>
+                        <h4 class="card-title">2. Order</h4>
+                        <p class="card-text">Browse the digital menu, select your favorite items, and place your order directly from your device.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-egg-fried display-3 text-primary mb-3"></i>
+                        <h4 class="card-title">3. Enjoy</h4>
+                        <p class="card-text">Your order is sent directly to the kitchen. Sit back, relax, and wait for your delicious meal to arrive.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section class="bg-light py-5">
+        <div class="container text-center">
+            <h2 class="mb-3">Ready to Get Started?</h2>
+            <p class="lead mb-4">Join our growing community of food lovers and vendors.</p>
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="{% url 'register_customer' %}" class="btn btn-success btn-lg px-4">Sign Up as a Customer</a>
+                <a href="{% url 'register_vendor' %}" class="btn btn-secondary btn-lg px-4">Register Your Business</a>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

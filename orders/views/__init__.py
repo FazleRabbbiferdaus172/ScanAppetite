@@ -1,4 +1,4 @@
-from .homepage import homepage_view
+from .homepage import homepage_view, LandingPageView
 from .meal import MealListView, MealCreateView, MealUpdateView, MealDeleteView
 from .cart import add_to_cart, view_cart, remove_from_cart
 from .vendor import VendorDashboardView, vendor_detail_view

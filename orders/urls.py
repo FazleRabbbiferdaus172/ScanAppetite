@@ -23,11 +23,13 @@ from .views import (
     qr_code_scanner_view,
     scan_and_verify_view,
     vendor_detail_view,
-    cancel_order_view
+    cancel_order_view,
+    LandingPageView,
 )
 
 urlpatterns = [
-    path('', homepage_view, name='homepage'),
+    path('', LandingPageView.as_view(), name='landing_page'),
+    path('home/', homepage_view, name='homepage'),
     path('add-to-cart/<int:meal_id>/', add_to_cart, name='add_to_cart'),
     path('remove-from-cart/<str:cart_item_id>/', remove_from_cart, name='remove_from_cart'),
     path('cart/', view_cart, name='view_cart'),
