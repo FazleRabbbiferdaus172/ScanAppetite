@@ -12,6 +12,13 @@ class Invoice(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=10, choices=InvoiceStatus.choices, default=InvoiceStatus.UNPAID)
     issued_at = models.DateTimeField(auto_now_add=True)
+    commission = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text="Commission earned"
+    )
+
 
     def __str__(self):
         return f"Invoice for Order {self.order.id}"

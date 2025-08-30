@@ -1,6 +1,6 @@
-from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.db.models import Sum, Count
+from django.urls import path
 from users.models import CustomUser, Profile
 from orders.models import Order, Invoice
 
@@ -25,6 +25,14 @@ class CustomAdminSite(AdminSite):
         extra_context['recent_orders'] = Order.objects.order_by('-created_at')[:5]
 
         return super().index(request, extra_context)
+
+    def get_urls(self):
+        from reports.views import AdminReportView
+        urls = super().get_urls()
+        custom_urls = [
+            path('reports/', AdminReportView.as_view(), name='admin_report')
+        ]
+        return custom_urls + urls
 
 custom_admin_site = CustomAdminSite(name='custom_admin')
 

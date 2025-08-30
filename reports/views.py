@@ -1,20 +1,21 @@
 from weasyprint import HTML
 from datetime import datetime, timedelta
 
-from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from weasyprint import HTML, CSS
 from django.contrib.staticfiles import finders
-from django.conf import settings
-import os
+from django.contrib import admin
 
+from core.admin import custom_admin_site
 from orders.models import Invoice, OrderItem
-from users.models import CustomUser
 from users.mixins import AdminRequiredMixin, VendorRequiredMixin
-from django.db.models import Sum, Count, F
+from django.db.models import Sum, F
+
+from users.models import CustomUser
+
 
 class PDFReportMixin:
     """
@@ -69,17 +70,32 @@ class AdminReportView(LoginRequiredMixin, AdminRequiredMixin, PDFReportMixin, Te
         # Date filtering
         date_from_str = self.request.GET.get('date_from', '')
         date_to_str = self.request.GET.get('date_to', '')
+        vendor_id_str = self.request.GET.get('vendor_id')
         
-        invoices = Invoice.objects.filter(status=Invoice.InvoiceStatus.PAID)
-        if date_from_str and date_to_str:
+        items = OrderItem.objects.filter(status=OrderItem.FulfillmentStatus.DELIVERED)
+        if date_from_str and date_to_str and vendor_id_str:
             date_from = datetime.strptime(date_from_str, '%Y-%m-%d')
             date_to = datetime.strptime(date_to_str, '%Y-%m-%d') + timedelta(days=1)
-            invoices = invoices.filter(issued_at__range=(date_from, date_to))
+            vendor = CustomUser.objects.get(id=vendor_id_str)
+            items = OrderItem.objects.filter(meal__vendor=vendor, status=OrderItem.FulfillmentStatus.DELIVERED, order__created_at__range=(date_from, date_to))
         
-        context['total_revenue'] = invoices.aggregate(total=Sum('total_amount'))['total'] or 0
-        context['total_orders'] = invoices.count()
+        total_revenue_agg = items.aggregate(total=Sum(F('quantity') * F('meal__price')))
+        context['total_revenue'] = total_revenue_agg['total'] or 0
+        context['total_meals_sold'] = items.aggregate(total=Sum('quantity'))['total'] or 0
+        top_meals = items.values('meal__name').annotate(
+            total_quantity_sold=Sum('quantity'),
+            total_revenue=Sum(F('quantity') * F('meal__price'))
+        ).order_by('-total_quantity_sold')
+        context['order_items'] = items.select_related('order', 'meal') # For Detailed Sales table
+        context['top_meals'] = top_meals
+
+        # Pass data to the template context
+        context['order_items'] = items.select_related('order', 'meal')
         context['date_from'] = date_from_str
         context['date_to'] = date_to_str
+        context['all_vendors'] = CustomUser.objects.filter(user_type__in=[CustomUser.UserType.VENDOR])
+        context['selected_vendor_id'] = int(vendor_id_str) if vendor_id_str else None
+        context.update(custom_admin_site.each_context(self.request))
         return context
 
 class VendorReportView(LoginRequiredMixin, VendorRequiredMixin, PDFReportMixin, TemplateView):

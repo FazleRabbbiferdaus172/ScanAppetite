@@ -18,7 +18,7 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
 
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('order', 'total_amount', 'status')
+    list_display = ('order', 'total_amount', 'status', 'commission')
     list_filter = ('status',)
 
 class OrderItemAdmin(admin.ModelAdmin):

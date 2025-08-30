@@ -1,28 +1,116 @@
-{% extends "core/base.html" %}
-{% load url_helpers %}
-{% block content %}
-    <div class="container mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Admin Report</h2>
-            <a href="?{% url_replace format='pdf' %}" class="btn btn-primary">Download as PDF</a>
-        </div>
+{% extends "admin/base_site.html" %}
 
-        <form method="get" class="row g-3 mb-4 p-3 border rounded">
-            <div class="col-md-5">
-                <label for="date_from" class="form-label">From</label>
-                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
-            </div>
-            <div class="col-md-5">
-                <label for="date_to" class="form-label">To</label>
-                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-success w-100">Filter</button>
+{% block content %}
+    <h1>Admin Report</h1>
+
+    <div id="content-main">
+
+        <form method="get" action="">
+            <div class="module">
+                <h2>Filter by Date</h2>
+                <fieldset class="module aligned">
+                    <div class="form-row">
+                        <div>
+                            <label for="date_from">From:</label>
+                            <input type="date" id="date_from" name="date_from"
+                                   value="{{ date_from|default_if_none:'' }}" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="date_to">To:</label>
+                            <input type="date" id="date_to" name="date_to" value="{{ date_to|default_if_none:'' }}"
+                                   required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="vendor_id">Vendor:</label>
+                            <select id="vendor_id" name="vendor_id">
+                                <option value="">All Vendors</option>
+                                {% for vendor in all_vendors %}
+                                    <option value="{{ vendor.id }}"
+                                            {% if vendor.id == selected_vendor_id %}selected{% endif %}>
+                                        {{ vendor.username }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </fieldset>
+                <div class="submit-row">
+                    <input type="submit" value="Filter" class="default">
+                    <a href="?format=pdf" class="default">Download as PDF</a>
+                </div>
             </div>
         </form>
 
-        <h4>Summary for Selected Period</h4>
-        <p><strong>Total Revenue:</strong> ${{ total_revenue|floatformat:2 }}</p>
-        <p><strong>Total Orders:</strong> {{ total_orders }}</p>
+        <div class="module" id="summary-results">
+            <h2>Detailed Sales</h2>
+            <div class="results">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Meal</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in order_items %}
+                        <tr>
+                            <td>#{{ item.order.id }}</td>
+                            <td>{{ item.order.created_at|date:"Y-m-d H:i" }}</td>
+                            <td>{{ item.meal.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>${{ item.meal.price|floatformat:2 }}</td>
+                            <td>${{ item.meal.price|floatformat:2 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No sales found for the selected period.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="module" id="summary-results">
+            <h2>Summary for Selected Period</h2>
+            <div class="results">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>
+                            <div class="text"><span>Metric</span></div>
+                        </th>
+                        <th>
+                            <div class="text"><span>Value</span></div>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr class="row1">
+                        <td>Total Revenue</td>
+                        <td>${{ total_revenue|floatformat:2|default:"0.00" }}</td>
+                    </tr>
+                    <tr class="row2">
+                        <td>Total Orders</td>
+                        <td>{{ total_meals_sold }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
+{% endblock %}
+
+{% block userlinks %}
+    <a href="{% url 'admin:admin_report' %}">Reports</a> /
+    {{ block.super }}
 {% endblock %}

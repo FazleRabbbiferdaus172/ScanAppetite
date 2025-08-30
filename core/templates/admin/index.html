@@ -4,7 +4,6 @@
 {% block extrastyle %}
     {{ block.super }}
     <link rel="stylesheet" type="text/css" href="{% static 'css/admin_dashboard.css' %}">
-{#    <link rel="stylesheet" type="text/css" href="{% static 'css/admin_site_override.css' %}">#}
 {% endblock %}
 
 {% block content %}
@@ -88,5 +87,11 @@
     {% else %}
         <p>You don't have permission to view or edit anything.</p>
     {% endif %}
+
 </div>
+{% endblock %}
+
+{% block userlinks %}
+    <a href="{% url 'admin:admin_report' %}">Reports</a> /
+{{ block.super }}
 {% endblock %}
