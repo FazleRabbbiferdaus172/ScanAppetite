@@ -94,7 +94,7 @@ python manage.py runserver
 The application will be available at `http://127.0.0.1:8000/`
 
 ## Usage Workflow
-1. Admin: Log into the admin site at `/admin/` with your superuser account. You can manage users and change their user_type.
+1. Admin: Log into the admin site at `/admin/` with your superuser account. You can manage users and change their user_type. Can also download vendor wise pdf reports.
 
 2. Vendor: Register a new user via the "Register as a Vendor" page. Log in, and you will be redirected to your Vendor Dashboard at `/dashboard/`. From there, you can add meals. From `/reports/` you can view reports and download pdf
 
